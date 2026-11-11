@@ -12,6 +12,7 @@ First stable release. Promotes the `0.2.0` line to stable: permission-preserving
 ### Added
 
 - CI now runs the 60-second demo script (`examples/demo.sh`) on all three OSes, so the demo cannot silently regress.
+- `--version` flag on the CLI: `agent-revert --version` prints `agent-revert X.Y.Z` and exits (was: no version info without `pip show`).
 
 ### Fixed
 
