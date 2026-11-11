@@ -5,11 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- CI now runs the 60-second demo script (`examples/demo.sh`) on all three OSes, so the demo cannot silently regress.
+
 ### Fixed
 
 - Revert now restores file permission bits (e.g. executable `0755`) recorded at snapshot time; old snapshots stay compatible.
 - `export-patch` is binary-safe: binary/large files emit `Binary files a/... and b/... differ` instead of mojibake.
 - `__version__` synchronised to `0.2.0` with `pyproject.toml`.
+- `examples/demo.sh` now runs on Windows Git Bash: it falls back to `python` when `python3` is absent (override with `PYTHON_BIN=...`).
+- Windows: default-store CLI tests isolate `USERPROFILE` alongside `HOME` (`Path.home()` reads `USERPROFILE` on Windows), and the installed-entry-point test finds console scripts in both `bin/` (modern pip on every OS) and `Scripts/` (distutils-style) layouts.
+- `test_revert_restores_executable_bit` is skipped on Windows: POSIX permission bits are not representable there (full suite is green on windows-latest).
 
 ## [0.2.0] - 2026-11-11
 

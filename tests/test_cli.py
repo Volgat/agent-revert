@@ -17,6 +17,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 def _env(home):
     env = dict(os.environ)
     env["HOME"] = str(home)
+    # Windows: Path.home() reads USERPROFILE, not HOME — set both so the
+    # default store lands in the isolated fake home on every OS.
+    env["USERPROFILE"] = str(home)
     old = env.get("PYTHONPATH", "")
     env["PYTHONPATH"] = str(REPO_ROOT) + (os.pathsep + old if old else "")
     return env
