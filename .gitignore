@@ -8,3 +8,5 @@ build/
 *.egg-info/
 .agent-revert/
 .DS_Store
+.code_runs/
+proof_s2_verdict.txt
