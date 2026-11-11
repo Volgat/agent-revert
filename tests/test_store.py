@@ -94,3 +94,17 @@ def test_patch_export(project):
     patch = store.export_patch(snap, project)
     assert "a/app.py" in patch and "b/app.py" in patch
     assert "changed" in patch
+
+
+def test_patch_shows_deleted_content(project):
+    store = Store(project / "store")
+    snap = store.snapshot(project)
+    (project / "src" / "util.py").unlink()
+    (project / "new.py").write_text("brand new\n")
+    patch = store.export_patch(snap, project)
+    # deleted file: header /dev/null AND the removed lines (regression:
+    # previously only a "@@ deleted @@" stub was emitted, content lost)
+    assert "+++ /dev/null" in patch
+    assert "-x = 1" in patch
+    assert "--- /dev/null" in patch
+    assert "+brand new" in patch

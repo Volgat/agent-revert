@@ -187,7 +187,9 @@ class Store:
 
     # -- patch export ---------------------------------------------------
     def export_patch(self, snap: dict, root: Path, ignore: set[str] | None = None) -> str:
-        """Unified-diff-like text for modified files (added/deleted as headers)."""
+        """Unified diff vs the snapshot: deleted files show their removed
+        lines, added files their added lines, modified files a real hunks diff.
+        """
         import difflib
 
         ignore = self._effective_ignore(root, ignore)
@@ -195,9 +197,6 @@ class Store:
         d = self.diff(snap, root, ignore)
         chunks = []
         for rel in sorted(d["modified"] + d["added"] + d["deleted"]):
-            if rel in d["deleted"]:
-                chunks.append(f"--- a/{rel}\n+++ /dev/null\n@@ deleted @@\n")
-                continue
             digest = snap.get("files", {}).get(rel)
             old = ""
             if digest:
@@ -206,11 +205,16 @@ class Store:
                     old = blob.read_text(errors="replace")
             new_path = root / rel
             new = new_path.read_text(errors="replace") if new_path.exists() else ""
-            diff = difflib.unified_diff(
-                old.splitlines(keepends=True),
-                new.splitlines(keepends=True),
-                fromfile=f"a/{rel}",
-                tofile=f"b/{rel}",
+            if not old and not new:
+                continue
+            fromfile = f"a/{rel}" if rel not in d["added"] else "/dev/null"
+            tofile = "b/" + rel if rel not in d["deleted"] else "/dev/null"
+            chunks.extend(
+                difflib.unified_diff(
+                    old.splitlines(keepends=True),
+                    new.splitlines(keepends=True),
+                    fromfile=fromfile,
+                    tofile=tofile,
+                )
             )
-            chunks.extend(diff)
         return "".join(chunks)
