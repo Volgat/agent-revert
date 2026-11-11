@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-revert"
-version = "0.1.0"
+version = "0.2.0"
 description = "Undo any AI coding agent in one command — snapshot / revert / timeline / diff for your working tree"
 readme = "README.md"
 requires-python = ">=3.10"

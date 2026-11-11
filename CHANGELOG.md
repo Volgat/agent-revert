@@ -3,6 +3,22 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+## [0.2.0] - 2026-11-11
+
+### Added
+
+- Out-of-tree default store (no `.agent-revert` directory inside the working
+  tree by default) with bounded retention (5 snapshots, evict oldest).
+- End-to-end CLI tests: `tests/test_cli.py`, `tests/test_cli_default.py`
+  (installed entry point, default store snapshot/revert without `--store`).
+
+### Fixed
+
+- `export-patch` now emits a real unified diff for deleted/added files
+  (was truncated for additions).
+
 ## [0.1.0] - 2026-11-11
 
 ### Added
