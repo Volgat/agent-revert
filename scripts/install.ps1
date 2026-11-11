@@ -52,8 +52,7 @@ $venvBin = Join-Path $VenvDir "Scripts"
 & $venvPy -m pip install --quiet --upgrade pip
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: pip upgrade failed" -ForegroundColor Red; exit 1 }
 & $venvPy -m pip install --quiet "agent-revert @ git+https://github.com/kaia-cod/agent-revert"
-  if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: pip install of agent-revert failed" -ForegroundColor Red; exit 1 }
-}
+if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: pip install of agent-revert failed" -ForegroundColor Red; exit 1 }
 
 $exe = Join-Path $venvBin "agent-revert.exe"
 if (Test-Path $exe) {

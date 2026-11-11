@@ -3,6 +3,7 @@ __pycache__/
 .pytest_cache/
 .venv/
 venv/
+*.venv/
 dist/
 build/
 *.egg-info/
@@ -12,3 +13,17 @@ build/
 proof_s2_verdict.txt
 # suivi quotidien (journal d'exploitation, pas du code)
 suivi-agent-revert.md
+# secrets / env / artefacts a ne jamais committer
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+*.jsonl
+mail_watch/
+preuves/
+*.pdf
+LIVRAISON_VOCAUX_PRIVEE.md
+grep_results.log
+s5_ci/
