@@ -99,6 +99,40 @@ agent-revert revert
 See the full reproducible demo: [`examples/demo.sh`](examples/demo.sh)
 (`bash examples/demo.sh` — under 60 seconds, no network, no API key).
 
+## Docker (GitHub Container Registry)
+
+No Python install needed — the same CLI ships as a container image on the
+GitHub Container Registry (GHCR), published automatically by GitHub Actions
+from this repository (`ghcr.io/kaia-cod/agent-revert`):
+
+```bash
+docker pull ghcr.io/kaia-cod/agent-revert:latest
+docker run --rm -v "$PWD:/work" -w /work ghcr.io/kaia-cod/agent-revert:latest --help
+```
+
+Use `-v "$PWD:/work" -w /work` to point the CLI at your project directory,
+exactly as if you ran it locally, e.g.:
+
+```bash
+docker run --rm -v "$PWD:/work" -w /work ghcr.io/kaia-cod/agent-revert:latest snapshot --label "before refactor"
+docker run --rm -v "$PWD:/work" -w /work ghcr.io/kaia-cod/agent-revert:latest revert --dry-run
+```
+
+Available tags mirror the release flow: `latest` (default branch), `v*` /
+semantic versions (git tags), and `sha-<commit>` (every commit on `main`).
+The image carries OCI labels (`org.opencontainers.image.source` →
+`https://github.com/kaia-cod/agent-revert`), so the **Packages** section in
+the repository sidebar shows **agent-revert** as a *Container* package
+(alongside Apache Maven, NuGet, RubyGems and npm in GitHub Packages).
+
+> **Why a container and not the Python wheel in Packages?** GitHub Packages
+> only surfaces Maven, NuGet, RubyGems, npm and **Containers** in the
+> repository sidebar — Python wheels cannot appear there. The Python
+> distributions therefore stay on GitHub Releases (see
+> [Installation](#installation-macos--linux--windows) above: wheel +
+> sdist for `v1.0.0`), while the GHCR container image is what shows up
+> under **Packages** in this repository.
+
 ## Usage
 
 ```
