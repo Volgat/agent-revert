@@ -149,6 +149,15 @@ Tracked as GitHub issues (see the `Roadmap` column of the project board):
 git integration, binary/large-file handling, watch mode, IDE extension,
 Windows test matrix.
 
+
+## Discoverability
+
+Forgettable? No: `agent-revert` is deliberately boring — stdlib only,
+zero config, one command. It works precisely because AI coding agents
+keep getting better at *changing* files while undo stays manual.
+That gap — undo for any agent, with or without git — is the whole
+point of this project.
+
 ## License
 
 [MIT](LICENSE) © 2026 kaia-cod contributors.

@@ -94,7 +94,12 @@ class Store:
         if not root.is_dir():
             raise NotADirectoryError(f"not a directory: {root}")
         files: dict[str, str] = {}
+        modes: dict[str, int] = {}
         for rel in _iter_files(root, ignore):
+            try:
+                modes[rel] = int((root / rel).stat().st_mode & 0o777)
+            except OSError:
+                modes[rel] = 0o644
             data = (root / rel).read_bytes()
             digest = _sha256_bytes(data)
             blob = self.blobs / digest
@@ -117,6 +122,7 @@ class Store:
             "timestamp": time.time(),
             "label": label,
             "files": files,
+            "modes": modes,
             "dirs": _iter_dirs(root, ignore),
         }
         (self.snaps / f"{snap['id']}.json").write_text(json.dumps(snap, indent=2, sort_keys=True))
@@ -206,6 +212,12 @@ class Store:
             dest = root / rel
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(blob, dest)
+            _m = snap.get("modes", {}).get(rel)
+            if _m is not None:
+                try:
+                    dest.chmod(int(_m))
+                except OSError:
+                    pass
         # remove files not in snapshot
         for rel in d["added"]:
             p = root / rel
@@ -240,15 +252,20 @@ class Store:
         chunks = []
         for rel in sorted(d["modified"] + d["added"] + d["deleted"]):
             digest = snap.get("files", {}).get(rel)
-            old = ""
+            old_b = b""
             if digest:
                 blob = self.blobs / digest
                 if blob.exists():
-                    old = blob.read_text(errors="replace")
+                    old_b = blob.read_bytes()
             new_path = root / rel
-            new = new_path.read_text(errors="replace") if new_path.exists() else ""
-            if not old and not new:
+            new_b = new_path.read_bytes() if new_path.exists() and new_path.is_file() else b""
+            if not old_b and not new_b:
                 continue
+            if b"\x00" in old_b or b"\x00" in new_b or len(old_b) > 1000000 or len(new_b) > 1000000:
+                chunks.append(f"Binary files a/{rel} and b/{rel} differ\n")
+                continue
+            old = old_b.decode("utf-8", errors="replace")
+            new = new_b.decode("utf-8", errors="replace")
             fromfile = f"a/{rel}" if rel not in d["added"] else "/dev/null"
             tofile = "b/" + rel if rel not in d["deleted"] else "/dev/null"
             chunks.extend(

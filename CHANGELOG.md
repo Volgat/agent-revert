@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Revert now restores file permission bits (e.g. executable `0755`) recorded at snapshot time; old snapshots stay compatible.
+- `export-patch` is binary-safe: binary/large files emit `Binary files a/... and b/... differ` instead of mojibake.
+- `__version__` synchronised to `0.2.0` with `pyproject.toml`.
+
 ## [0.2.0] - 2026-11-11
 
 ### Added
