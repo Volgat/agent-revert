@@ -27,3 +27,6 @@ preuves/
 LIVRAISON_VOCAUX_PRIVEE.md
 grep_results.log
 s5_ci/
+# preuve interne d'execution, ne pas committer
+PROOF_CLEANUP.md
+PROOF_*.md
