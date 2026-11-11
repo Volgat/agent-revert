@@ -27,6 +27,9 @@ jobs:
           agent-revert timeline
           agent-revert status
           agent-revert revert --dry-run
+      - name: Demo script (60s, reproducible)
+        shell: bash
+        run: bash examples/demo.sh
       - name: Installer script check (Unix)
         if: runner.os != 'Windows'
         shell: bash
