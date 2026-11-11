@@ -20,7 +20,21 @@ printf "# demo\n" > "$DEMO_DIR/README.md"
 printf "x = 1\n" > "$DEMO_DIR/src/util.py"
 cd "$DEMO_DIR"
 
-RUN="python3 -m agent_revert --path $DEMO_DIR --store $STORE_DIR"
+# python3 on macOS/Linux; plain `python` on Windows (Git Bash) and venvs.
+# Override with PYTHON_BIN=/path/to/python bash examples/demo.sh
+PYTHON_BIN="${PYTHON_BIN:-}"
+if [ -z "$PYTHON_BIN" ]; then
+  if command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN=python3
+  elif command -v python >/dev/null 2>&1; then
+    PYTHON_BIN=python
+  else
+    echo "error: no python3/python in PATH (agent-revert needs Python >= 3.10)" >&2
+    exit 1
+  fi
+fi
+
+RUN="$PYTHON_BIN -m agent_revert --path $DEMO_DIR --store $STORE_DIR"
 
 echo "== 1. snapshot (before the agent runs) =="
 $RUN snapshot --label "before agent"

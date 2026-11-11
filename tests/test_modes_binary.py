@@ -1,8 +1,14 @@
 """S21: permission bits and binary-safe patch export."""
-from pathlib import Path
+import os
+
+import pytest
+
 from agent_revert.store import Store
 
 
+@pytest.mark.skipif(os.name == "nt",
+                    reason="POSIX permission bits are not representable on Windows "
+                           "(chmod only toggles the read-only flag)")
 def test_revert_restores_executable_bit(tmp_path):
     proj = tmp_path / "p"
     proj.mkdir()

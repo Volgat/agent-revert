@@ -20,6 +20,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -28,19 +29,26 @@ def _entry_point() -> str:
     if exe:
         return exe
     # Fallback for PEP 668 hosts: build an isolated install on the fly.
-    target = Path(os.environ.get("TMPDIR", "/tmp")) / "agent-revert-target"
-    if not (target / "bin" / "agent-revert").exists():
+    target = Path(os.environ.get("TMPDIR", tempfile.gettempdir())) / "agent-revert-target"
+    # pip --target layouts vary: bin/agent-revert(.exe) on modern pip (all OS),
+    # Scripts/agent-revert.exe on Windows distutils-style schemes.
+    candidates = [
+        target / "bin" / ("agent-revert.exe" if os.name == "nt" else "agent-revert"),
+        target / "Scripts" / "agent-revert.exe",
+    ]
+    script = next((c for c in candidates if c.exists()), None)
+    if script is None:
         subprocess.run(
             [sys.executable, "-m", "pip", "install", ".", "--target", str(target),
              "--quiet", "--disable-pip-version-check"],
             check=True, capture_output=True, text=True,
         )
-    exe = target / "bin" / "agent-revert"
-    assert exe.exists(), (
+        script = next((c for c in candidates if c.exists()), None)
+    assert script is not None, (
         f"entry point 'agent-revert' not found (PATH, $AGENT_REVERT_BIN, "
-        f"or isolated install at {exe}) — run: pip install -e ."
+        f"or isolated install in {candidates}) — run: pip install -e ."
     )
-    return str(exe)
+    return str(script)
 
 
 def _expected_store(home: Path, proj: Path) -> Path:
@@ -59,6 +67,7 @@ def test_installed_entrypoint_default_store_snapshot_revert(tmp_path):
 
     env = dict(os.environ)
     env["HOME"] = str(home)
+    env["USERPROFILE"] = str(home)  # Windows: Path.home() reads USERPROFILE
     # pip --target installs are not on sys.path by default; the console
     # script needs its install root to import the package.
     old_pp = env.get("PYTHONPATH", "")
