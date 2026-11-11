@@ -42,3 +42,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Git integration (commit-aware snaps), watch mode, IDE extension,
   large/binary file handling, Windows CI matrix.
+
+### Added (Unreleased)
+- Per-OS professional installers: `scripts/install.sh` (macOS/Linux/Git Bash, pipx > venv, `--venv`/`--no-pipx`/`--help`, exit codes 0/1) and `scripts/install.ps1` (Windows PowerShell, `-VenvDir`/`-Help`, exit codes 0/1), both verifying Python ≥ 3.10 with OS-specific guidance.
+- Cross-platform CI matrix: Ubuntu / macOS / Windows × Python 3.10 / 3.12, including an installer-script parse/help check on each OS.
+- `pyproject.toml`: OS classifiers (macOS / Windows / POSIX Linux) and project URLs.

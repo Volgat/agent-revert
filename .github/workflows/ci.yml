@@ -1,11 +1,43 @@
 name: CI
 on: [push, pull_request]
+
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: "test (${{ matrix.os }} / py${{ matrix.python }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.10", "3.12"]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: "3.12"}
-      - run: pip install -e .[dev]
-      - run: pytest -q
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install (editable + dev)
+        run: python -m pip install --upgrade pip && python -m pip install -e .[dev]
+      - name: Tests
+        run: python -m pytest -q
+      - name: CLI smoke (installed entry point)
+        shell: bash
+        run: |
+          agent-revert --help
+          agent-revert snapshot --label "ci-smoke"
+          agent-revert timeline
+          agent-revert status
+          agent-revert revert --dry-run
+      - name: Installer script check (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          bash -n scripts/install.sh
+          bash scripts/install.sh --help
+      - name: Installer script check (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tokens = $null; $errors = $null
+          $null = [System.Management.Automation.Language.Parser]::ParseFile("$PWD/scripts/install.ps1", [ref]$tokens, [ref]$errors)
+          if ($errors -and $errors.Count -gt 0) { $errors | ForEach-Object { Write-Host $_.Message }; exit 1 }
+          Write-Host "install.ps1 parses OK"

@@ -5,6 +5,7 @@
 [![CI](https://github.com/kaia-cod/agent-revert/actions/workflows/ci.yml/badge.svg)](https://github.com/kaia-cod/agent-revert/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
+[![OS macOS | Linux | Windows](https://img.shields.io/badge/OS-macOS%20%7C%20Linux%20%7C%20Windows-informational)](scripts/install.sh)
 [![Stars](https://img.shields.io/github/stars/kaia-cod/agent-revert?style=social)](https://github.com/kaia-cod/agent-revert/stargazers)
 
 > Your AI coding agent just rewrote your codebase. Git can't help you — those
@@ -42,14 +43,52 @@ commit. When the result is broken, you have no clean way back:
 tree, taken in milliseconds, with `revert`, `timeline`, `status` and `patch`
 on top. Zero dependencies, works with or without git, no API key.
 
+## Installation (macOS · Linux · Windows)
+
+**Prerequisite — every OS:** Python **≥ 3.10** (`python3 --version` / `py --version` / `python --version`).
+Stdlib only — no other runtime dependency.
+
+### 🍎 macOS / 🐧 Linux
+
+```bash
+# Recommended: isolated CLI app with pipx (keeps your system Python clean)
+pipx install 'agent-revert @ git+https://github.com/kaia-cod/agent-revert'   # latest from git (PyPI lags: 0.1.5 vs 0.2.0)
+
+# Alternative: one-command installer script (pipx if present, else a venv in ~/.local)
+curl -fsSL https://raw.githubusercontent.com/kaia-cod/agent-revert/main/scripts/install.sh | bash
+# or, from a local checkout:
+bash scripts/install.sh           # options: --help, --venv DIR, --no-pipx
+
+# Manual / any environment:
+pip install 'agent-revert @ git+https://github.com/kaia-cod/agent-revert'   # or: pip install -e .  from a checkout
+```
+
+### 🪟 Windows (PowerShell)
+
+```powershell
+# Recommended: isolated CLI app with pipx
+pipx install 'agent-revert @ git+https://github.com/kaia-cod/agent-revert'
+
+# Alternative: one-command installer script (creates %LOCALAPPDATA%\agent-revert\venv)
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1      # -VenvDir <dir> to customise
+# or one-liner:
+irm https://raw.githubusercontent.com/kaia-cod/agent-revert/main/scripts/install.ps1 | iex
+
+# Manual / any environment:
+py -m pip install 'agent-revert @ git+https://github.com/kaia-cod/agent-revert'   # or: python -m pip install -e .  from a checkout
+```
+
+> **Installer exit codes (both scripts):** `0` = success, `1` = Python ≥ 3.10 missing / install failure. Run `bash scripts/install.sh --help` (or `install.ps1 -Help`) for options.
+
+> **Verify:** `agent-revert --help` prints the usage. If the command is not found,
+> restart your terminal (PATH) or run `python -m agent_revert --help` /
+> `py -m agent_revert --help`. The default snapshot store lives outside your
+> tree at `~/.agent-revert/<project>-<hash>` (macOS/Linux) or
+> `%USERPROFILE%\.agent-revert\<project>-<hash>` (Windows).
+
 ## Quick start
 
 ```bash
-pip install agent-revert        # or: pipx install agent-revert
-# or without installing:
-#   git clone https://github.com/kaia-cod/agent-revert && cd agent-revert
-#   python3 -m agent_revert ...
-
 cd your-project
 
 # 1. snapshot BEFORE the agent runs
@@ -81,11 +120,11 @@ patch [--snapshot ID]          export a unified diff vs a snapshot
 ```
 
 - `--path` defaults to the current directory.
-- `--store` defaults to `<path>/.agent-revert`. To keep the store **out** of
-  the tracked tree (recommended), pass a directory outside `--path`, e.g.
-  `--store ~/.agent-revert/myproject`. The store is content-addressed
-  (`blobs/<sha256>` + `snapshots/<id>.json`), so unchanged files cost nothing
-  across snapshots.
+- `--store` defaults to `~/.agent-revert/<project>-<hash8>` (outside the
+  tracked tree, on every OS; `%USERPROFILE%\.agent-revert\...` on Windows).
+  Pass `--store DIR` to override, e.g. `--store ~/.agent-revert/myproject`.
+  The store is content-addressed (`blobs/<sha256>` + `snapshots/<id>.json`),
+  so unchanged files cost nothing across snapshots.
 - Ignored by default: `.git`, `__pycache__`, `.venv`, `venv`, `.mypy_cache`,
   `.pytest_cache`, `node_modules`.
 
@@ -164,8 +203,9 @@ See [CHANGELOG.md](CHANGELOG.md).
 ## Roadmap
 
 Tracked as GitHub issues (see the `Roadmap` column of the project board):
-git integration, binary/large-file handling, watch mode, IDE extension,
-Windows test matrix.
+git integration, binary/large-file handling, watch mode, IDE extension.
+Cross-platform CI (Ubuntu / macOS / Windows × Python 3.10 / 3.12) and
+per-OS installers (`scripts/install.sh`, `scripts/install.ps1`) are shipped.
 
 
 ## Discoverability
