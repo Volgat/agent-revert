@@ -13,20 +13,6 @@
 > before the agent runs and restores it in one command.
 
 
-## 🚀 Launch status — 30-day open-source project
-
-Bounded 30-day autonomous open-source sprint under **@kaia-cod** — no third-party
-accounts, no user solicitation. What was provable with owned accounts is shipped here.
-
-- **Repository:** https://github.com/kaia-cod/agent-revert
-- **Releases:** https://github.com/kaia-cod/agent-revert/releases
-- **Project board (issues):** https://github.com/kaia-cod/agent-revert/issues
-  Board columns are tracked as labelled issues: `[BACKLOG]`, `[IN PROGRESS]`,
-  `[REVIEW]`, `[DONE]`, `[ROADMAP]` (equivalent of a Projects board via API).
-- **Audit:** [`AUDIT.md`](AUDIT.md) — bounded audit of the local repo and the
-  @kaia-cod account, including what was honestly abandoned (Show HN, Product Hunt,
-  10 000 stars, HF Space) and why.
-
 Status: `snapshot` / `revert` / `timeline` / `status` / `patch` implemented and
 tested (stdlib only, Python ≥ 3.10). See [CHANGELOG.md](CHANGELOG.md) for details.
 
@@ -213,7 +199,6 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 ## Roadmap
 
-Tracked as GitHub issues (see the `Roadmap` column of the project board):
 git integration, binary/large-file handling, watch mode, IDE extension.
 Cross-platform CI (Ubuntu / macOS / Windows × Python 3.10 / 3.12) and
 per-OS installers (`scripts/install.sh`, `scripts/install.ps1`) are shipped.
