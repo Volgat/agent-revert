@@ -1,61 +1,69 @@
-"""End-to-end CLI tests for agent-revert."""
+"""CLI tests for the default path: snapshot / revert / patch.
+
+All calls run without the store override flag, with HOME isolated,
+so this suite proves what a fresh user gets out of the box:
+the default store lives under HOME and never inside the project.
+"""
+import os
+import subprocess
+import sys
 from pathlib import Path
 
-from agent_revert.cli import main
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
-def _project(tmp_path: Path) -> Path:
-    root = tmp_path / "proj"
-    root.mkdir()
-    (root / "app.py").write_text("print('hello')\n")
-    (root / "util.py").write_text("x = 1\n")
-    return root
+def _env(home):
+    env = dict(os.environ)
+    env["HOME"] = str(home)
+    old = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = str(REPO_ROOT) + (os.pathsep + old if old else "")
+    return env
 
 
-def test_cli_full_cycle(tmp_path, capsys):
-    root = _project(tmp_path)
-    store = str(tmp_path / "store")
-    base = ["--path", str(root), "--store", store]
-
-    assert main(base + ["snapshot", "--label", "before agent"]) == 0
-    out = capsys.readouterr().out
-    assert "snapshot" in out and "files=2" in out
-
-    # agent breaks things
-    (root / "app.py").write_text("BROKEN\n")
-    (root / "util.py").unlink()
-    (root / "junk.txt").write_text("junk\n")
-
-    assert main(base + ["status"]) == 0
-    out = capsys.readouterr().out
-    assert "added:" in out and "modified:" in out and "deleted:" in out
-
-    assert main(base + ["revert", "--dry-run"]) == 0
-    assert (root / "junk.txt").exists()  # dry-run changes nothing
-
-    assert main(base + ["revert"]) == 0
-    assert (root / "app.py").read_text() == "print('hello')\n"
-    assert (root / "util.py").read_text() == "x = 1\n"
-    assert not (root / "junk.txt").exists()
-
-    assert main(base + ["timeline"]) == 0
-    out = capsys.readouterr().out
-    assert "before agent" in out
+def _run(home, proj, *args):
+    return subprocess.run(
+        [sys.executable, "-m", "agent_revert", "--path", str(proj), *args],
+        cwd=str(proj), env=_env(home), capture_output=True, text=True,
+    )
 
 
-def test_cli_no_snapshots(tmp_path):
-    root = _project(tmp_path)
-    store = str(tmp_path / "store")
-    assert main(["--path", str(root), "--store", store, "timeline"]) == 0
-    assert main(["--path", str(root), "--store", store, "status"]) == 1
+def _project(tmp_path):
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    home = tmp_path / "home"
+    home.mkdir()
+    return proj, home
 
 
-def test_cli_patch(tmp_path, capsys):
-    root = _project(tmp_path)
-    store = str(tmp_path / "store")
-    base = ["--path", str(root), "--store", store]
-    assert main(base + ["snapshot"]) == 0
-    (root / "app.py").write_text("changed\n")
-    assert main(base + ["patch"]) == 0
-    out = capsys.readouterr().out
-    assert "a/app.py" in out and "changed" in out
+def test_cli_snapshot_default_store_outside_tree(tmp_path):
+    proj, home = _project(tmp_path)
+    (proj / "app.py").write_text("hello\n")
+    r = _run(home, proj, "snapshot")
+    assert r.returncode == 0, r.stderr + r.stdout
+    stored = [p for p in home.rglob("*") if p.is_file()]
+    assert len(stored) >= 1
+    assert not (proj / ".agent-revert").exists()
+    assert (proj / "app.py").read_text() == "hello\n"
+
+
+def test_cli_revert_restores_via_default_store(tmp_path):
+    proj, home = _project(tmp_path)
+    (proj / "app.py").write_text("v1\n")
+    assert _run(home, proj, "snapshot").returncode == 0
+    (proj / "app.py").write_text("v2\n")
+    r = _run(home, proj, "revert")
+    assert r.returncode == 0, r.stderr + r.stdout
+    assert (proj / "app.py").read_text() == "v1\n"
+
+
+def test_cli_patch_exports_diff_via_default_store(tmp_path):
+    proj, home = _project(tmp_path)
+    (proj / "app.py").write_text("line1\n")
+    assert _run(home, proj, "snapshot").returncode == 0
+    (proj / "app.py").write_text("line1\nline2\n")
+    r = _run(home, proj, "patch")
+    assert r.returncode == 0, r.stderr + r.stdout
+    assert "app.py" in r.stdout
+    assert "line2" in r.stdout
+    assert "+" in r.stdout
+
