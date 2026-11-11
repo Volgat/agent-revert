@@ -37,6 +37,13 @@ Stdlib only — no other runtime dependency.
 ### 🍎 macOS / 🐧 Linux
 
 ```bash
+# v1.0.0 (pinned, verified) — wheel + sdist published as GitHub Release assets:
+pip install https://github.com/kaia-cod/agent-revert/releases/download/v1.0.0/agent_revert-1.0.0-py3-none-any.whl
+# or the sdist:
+pip install https://github.com/kaia-cod/agent-revert/releases/download/v1.0.0/agent_revert-1.0.0.tar.gz
+# Release page (hashes sha256 whl f933bf9a…26049 / tar.gz 25df8628…6dbd9):
+# https://github.com/kaia-cod/agent-revert/releases/tag/v1.0.0
+
 # Recommended: isolated CLI app with pipx (keeps your system Python clean)
 pipx install 'agent-revert @ git+https://github.com/kaia-cod/agent-revert'   # latest from git (PyPI lags: 0.1.5 vs 0.2.0)
 
