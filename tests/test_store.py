@@ -96,6 +96,21 @@ def test_patch_export(project):
     assert "changed" in patch
 
 
+def test_retention_prunes_old_snapshots_and_blobs(project):
+    store = Store(project / "store", max_snapshots=5)
+    for i in range(7):
+        (project / ".agent-revert").mkdir(exist_ok=True)
+        (project / "app.py").write_text(f"v{i}\n")
+        store.snapshot(project, label=f"s{i}")
+    snaps = store.list_snapshots()
+    assert len(snaps) == 5
+    assert [s["label"] for s in snaps] == ["s2", "s3", "s4", "s5", "s6"]
+    blobs = list((project / "store" / "blobs").iterdir())
+    # only blobs referenced by the 5 kept snapshots remain (app.py v2..v6;
+    # README.md and src/util.py are shared across all snapshots)
+    assert len(blobs) == 7, sorted(b.name for b in blobs)
+
+
 def test_patch_shows_deleted_content(project):
     store = Store(project / "store")
     snap = store.snapshot(project)

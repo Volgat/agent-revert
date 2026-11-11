@@ -6,13 +6,13 @@ import json
 import sys
 from pathlib import Path
 
-from .store import Store
+from .store import Store, default_store_path
 
 
 def _store_for(root: Path, store: str | None) -> Store:
     if store:
         return Store(Path(store))
-    return Store(root / ".agent-revert")
+    return Store(default_store_path(root))
 
 
 def cmd_snapshot(args) -> int:
@@ -79,7 +79,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="agent-revert",
                                 description="Undo any AI coding agent in one command.")
     p.add_argument("--path", type=Path, default=Path.cwd(), help="project directory (default: cwd)")
-    p.add_argument("--store", type=str, default=None, help="custom store dir (default: <path>/.agent-revert)")
+    p.add_argument("--store", type=str, default=None, help="custom store dir (default: ~/.agent-revert/<project>-<hash>)")
     sub = p.add_subparsers(dest="command", required=True)
 
     s = sub.add_parser("snapshot", help="take a snapshot of the tree")

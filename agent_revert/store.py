@@ -21,6 +21,21 @@ from pathlib import Path
 
 DEFAULT_IGNORE = {".git", "__pycache__", ".venv", "venv", ".mypy_cache", ".pytest_cache", "node_modules"}
 
+DEFAULT_MAX_SNAPSHOTS = 5
+
+
+def default_store_path(root: Path) -> Path:
+    """Default store location: outside the tracked tree.
+
+    ``~/.agent-revert/<project>-<hash8>`` where ``hash8`` is derived from
+    the resolved project path, so different checkouts never collide while
+    repeated runs on the same project reuse the same store.
+    """
+    root = Path(root).resolve()
+    name = root.name or "project"
+    digest = hashlib.sha256(str(root).encode("utf-8")).hexdigest()[:8]
+    return Path.home() / ".agent-revert" / f"{name}-{digest}"
+
 
 def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -49,8 +64,9 @@ def _iter_dirs(root: Path, ignore: set[str]):
 
 
 class Store:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, max_snapshots: int = DEFAULT_MAX_SNAPSHOTS):
         self.path = Path(path)
+        self.max_snapshots = int(max_snapshots)
         self.blobs = self.path / "blobs"
         self.snaps = self.path / "snapshots"
         self.blobs.mkdir(parents=True, exist_ok=True)
@@ -104,7 +120,33 @@ class Store:
             "dirs": _iter_dirs(root, ignore),
         }
         (self.snaps / f"{snap['id']}.json").write_text(json.dumps(snap, indent=2, sort_keys=True))
+        self._prune()
         return snap
+
+    def _prune(self) -> list[str]:
+        """Keep only the newest ``max_snapshots`` snapshots; drop stale blobs."""
+        if self.max_snapshots <= 0:
+            return []
+        snaps = self.list_snapshots()
+        if len(snaps) <= self.max_snapshots:
+            return []
+        keep, drop = snaps[-self.max_snapshots:], snaps[: -self.max_snapshots]
+        dropped = []
+        for s in drop:
+            f = self.snaps / f"{s['id']}.json"
+            try:
+                f.unlink()
+                dropped.append(s["id"])
+            except OSError:
+                pass
+        referenced = {d for s in keep for d in s.get("files", {}).values()}
+        for blob in self.blobs.iterdir():
+            if blob.is_file() and blob.name not in referenced:
+                try:
+                    blob.unlink()
+                except OSError:
+                    pass
+        return dropped
 
     # -- listing --------------------------------------------------------
     def list_snapshots(self) -> list[dict]:
