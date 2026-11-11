@@ -9,6 +9,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from agent_revert.cli import main
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -67,3 +69,57 @@ def test_cli_patch_exports_diff_via_default_store(tmp_path):
     assert "line2" in r.stdout
     assert "+" in r.stdout
 
+
+
+
+
+def test_cli_max_snapshots_flag(tmp_path, capsys):
+    root, _home = _project(tmp_path)
+    store = str(tmp_path / "store")
+    base = ["--path", str(root), "--store", store, "--max-snapshots", "2"]
+
+    for i in range(3):
+        (root / "app.py").write_text(f"v{i}\n")
+        assert main(base + ["snapshot", "--label", f"s{i}"]) == 0
+    out = capsys.readouterr().out
+    assert "pruned:" in out, out  # oldest snapshot was dropped, and we say so
+
+    assert main(["--path", str(root), "--store", store, "timeline"]) == 0
+    out = capsys.readouterr().out
+    assert "s2" in out and "s0" not in out
+
+
+def test_cli_pin_unpin(tmp_path, capsys):
+    root, _home = _project(tmp_path)
+    store = str(tmp_path / "store")
+    base = ["--path", str(root), "--store", store]
+
+    assert main(base + ["snapshot", "--label", "known good"]) == 0
+    out = capsys.readouterr().out
+    snap_id = out.split()[1]
+
+    assert main(base + ["pin", snap_id]) == 0
+    out = capsys.readouterr().out
+    assert "pinned" in out
+
+    assert main(base + ["timeline"]) == 0
+    assert "[pinned]" in capsys.readouterr().out
+
+    # retention of 1 would drop anything unpinned; pinned survives
+    (root / "app.py").write_text("v1\n")
+    assert main(base + ["--max-snapshots", "1", "snapshot", "--label", "b"]) == 0
+    assert main(["--path", str(root), "--store", store, "timeline"]) == 0
+    out = capsys.readouterr().out
+    assert "known good" in out and "[pinned]" in out
+
+    assert main(base + ["unpin", snap_id]) == 0
+    assert "unpinned" in capsys.readouterr().out
+
+
+def test_cli_pin_unknown_snapshot(tmp_path, capsys):
+    root, _home = _project(tmp_path)
+    store = str(tmp_path / "store")
+    base = ["--path", str(root), "--store", store]
+    assert main(base + ["snapshot"]) == 0
+    capsys.readouterr()
+    assert main(base + ["pin", "deadbeef"]) == 1  # KeyError -> clean error, exit 1
