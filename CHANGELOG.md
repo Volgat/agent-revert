@@ -5,6 +5,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `--version` flag on the CLI: `agent-revert --version` prints `agent-revert X.Y.Z` and exits (was: no version info without `pip show`).
+
 ### Fixed
 
 - Revert now restores file permission bits (e.g. executable `0755`) recorded at snapshot time; old snapshots stay compatible.

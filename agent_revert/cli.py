@@ -6,6 +6,7 @@ import json
 import sys
 from pathlib import Path
 
+from . import __version__
 from .store import DEFAULT_MAX_SNAPSHOTS, Store, default_store_path
 
 
@@ -95,6 +96,8 @@ def cmd_patch(args) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="agent-revert",
                                 description="Undo any AI coding agent in one command.")
+    p.add_argument("--version", action="version", version=f"agent-revert {__version__}",
+                   help="show the version and exit")
     p.add_argument("--path", type=Path, default=Path.cwd(), help="project directory (default: cwd)")
     p.add_argument("--store", type=str, default=None, help="custom store dir (default: ~/.agent-revert/<project>-<hash>)")
     p.add_argument("--max-snapshots", type=int, default=DEFAULT_MAX_SNAPSHOTS,
